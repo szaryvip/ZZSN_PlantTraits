@@ -19,3 +19,5 @@ Poniżej zostaną przedstawione dane, które należy przewidzieć. Nazwy zmienny
 
 Celem jest przewidzenie wartości wyżej wymienionych zmiennych bazując na otrzymanych obrazach oraz danych warunkujących dostarczonych w postaci tabelarycznej.
 W przypadku niektórych wartości zawartych w danych tabelarycznych zostały one sztucznie wygenerowane - proces ich generowania znajduje się w artykule: [Schiller, C., Schmidtlein, S., Boonman, C., Moreno-Martínez, A., \& Kattenborn, T. (2021). Deep learning and citizen science enable automated plant trait predictions from photographs. Scientific Reports, 11(1), 16395.](https://www.nature.com/articles/s41598-021-95616-0)
+
+W celu poprawnego działania wszystkich skryptów, należy rozpakować dane uzyskane z platformy kaggle do folderu `data` w głównym folderze repozytorium.
