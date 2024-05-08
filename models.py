@@ -25,3 +25,19 @@ class SimpleTabularModel(torch.nn.Module):
         x = torch.nn.functional.relu(self.fc1(x))
         x = torch.nn.functional.relu(self.fc2(x))
         return x
+
+
+class EnsemblePGLSModel(torch.nn.Module):
+    def __init__(self, image_models, tabular_model):
+        super(EnsemblePGLSModel, self).__init__()
+        self.image_models = image_models
+        self.tabular_model = tabular_model
+        self.fc = torch.nn.Linear(len(self.image_models) * 1000 + 100, 6)
+
+    def forward(self, image, tabular):
+        image_features =\
+            [image_model(image) for image_model in self.image_models]
+        tabular_features = self.tabular_model(tabular)
+        features = torch.cat(image_features, 1)
+        features = torch.cat((features, tabular_features), 1)
+        return self.fc(features)

@@ -4,3 +4,7 @@ pandas==2.2.1
 numpy==1.26.4
 matplotlib==3.8.4
 torcheval==0.0.7
+timm==0.9.16
+torchrec==0.7.0
+iopath==0.1.10
+pyre_extensions==0.0.30
