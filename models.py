@@ -4,9 +4,14 @@ import torch
 class PGLSModel(torch.nn.Module):
     def __init__(self, image_model, tabular_model):
         super(PGLSModel, self).__init__()
+        image_model.eval()
+        dummy_input = torch.randn(1, 3, 224, 224)
+        with torch.no_grad():
+            output = image_model(dummy_input)
+        image_features_number = output.shape[1]
         self.image_model = image_model
         self.tabular_model = tabular_model
-        self.fc = torch.nn.Linear(1000 + 100, 6)
+        self.fc = torch.nn.Linear(image_features_number + 100, 6)
 
     def forward(self, image, tabular):
         image_features = self.image_model(image)
@@ -32,7 +37,14 @@ class EnsemblePGLSModel(torch.nn.Module):
         super(EnsemblePGLSModel, self).__init__()
         self.image_models = image_models
         self.tabular_model = tabular_model
-        self.fc = torch.nn.Linear(len(self.image_models) * 1000 + 100, 6)
+        image_features_number = 0
+        for image_model in self.image_models:
+            image_model.eval()
+            dummy_input = torch.randn(1, 3, 224, 224)
+            with torch.no_grad():
+                output = image_model(dummy_input)
+            image_features_number += output.shape[1]
+        self.fc = torch.nn.Linear(image_features_number + 100, 6)
 
     def forward(self, image, tabular):
         image_features =\
