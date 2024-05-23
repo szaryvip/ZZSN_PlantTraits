@@ -1,6 +1,25 @@
 import torch
 
 
+class PGLSModelLateFusion(torch.nn.Module):
+    def __init__(self, image_model, tabular_model, tabular_model_out_size=100):
+        super(PGLSModelLateFusion, self).__init__()
+        image_model.eval()
+        dummy_input = torch.randn(1, 3, 224, 224)
+        with torch.no_grad():
+            output = image_model(dummy_input)
+        image_features_number = output.shape[1]
+        self.image_model = image_model
+        self.tabular_model = tabular_model
+        self.fc = torch.nn.Linear(image_features_number + tabular_model_out_size, 6)
+
+    def forward(self, image, tabular):
+        image_features = self.image_model(image)
+        tabular_features = self.tabular_model(tabular)
+        features = torch.cat((image_features, tabular_features), 1)
+        return self.fc(features)
+
+
 class PGLSModel(torch.nn.Module):
     def __init__(self, image_model, tabular_input_len):
         super(PGLSModel, self).__init__()
@@ -28,8 +47,8 @@ class PGLSModel(torch.nn.Module):
 class SimpleTabularModel(torch.nn.Module):
     def __init__(self, input_data_len):
         super(SimpleTabularModel, self).__init__()
-        self.fc1 = torch.nn.Linear(input_data_len, input_data_len*4)
-        self.fc2 = torch.nn.Linear(input_data_len*4, 100)
+        self.fc1 = torch.nn.Linear(input_data_len, input_data_len * 4)
+        self.fc2 = torch.nn.Linear(input_data_len * 4, 100)
 
     def forward(self, x):
         x = torch.nn.functional.relu(self.fc1(x))
