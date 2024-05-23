@@ -2,7 +2,7 @@ import torch
 
 
 class PGLSModel(torch.nn.Module):
-    def __init__(self, image_model, tabular_model):
+    def __init__(self, image_model, tabular_input_len):
         super(PGLSModel, self).__init__()
         image_model.eval()
         dummy_input = torch.randn(1, 3, 224, 224)
@@ -10,14 +10,19 @@ class PGLSModel(torch.nn.Module):
             output = image_model(dummy_input)
         image_features_number = output.shape[1]
         self.image_model = image_model
-        self.tabular_model = tabular_model
-        self.fc = torch.nn.Linear(image_features_number + 100, 6)
+        self.features_combined = image_features_number + tabular_input_len
+        self.head = torch.nn.Sequential(
+            torch.nn.Linear(self.features_combined, self.features_combined//4),
+            torch.nn.ReLU(),
+            torch.nn.Linear(self.features_combined//4, 100),
+            torch.nn.ReLU(),
+            torch.nn.Linear(100, 6)
+        )
 
     def forward(self, image, tabular):
         image_features = self.image_model(image)
-        tabular_features = self.tabular_model(tabular)
-        features = torch.cat((image_features, tabular_features), 1)
-        return self.fc(features)
+        features = torch.cat((image_features, tabular), 1)
+        return self.head(features)
 
 
 class SimpleTabularModel(torch.nn.Module):
@@ -33,10 +38,9 @@ class SimpleTabularModel(torch.nn.Module):
 
 
 class EnsemblePGLSModel(torch.nn.Module):
-    def __init__(self, image_models, tabular_model):
+    def __init__(self, image_models, tabular_input_len):
         super(EnsemblePGLSModel, self).__init__()
         self.image_models = image_models
-        self.tabular_model = tabular_model
         image_features_number = 0
         for image_model in self.image_models:
             image_model.eval()
@@ -44,12 +48,18 @@ class EnsemblePGLSModel(torch.nn.Module):
             with torch.no_grad():
                 output = image_model(dummy_input)
             image_features_number += output.shape[1]
-        self.fc = torch.nn.Linear(image_features_number + 100, 6)
+        self.features_combined = image_features_number + tabular_input_len
+        self.head = torch.nn.Sequential(
+            torch.nn.Linear(self.features_combined, self.features_combined//4),
+            torch.nn.ReLU(),
+            torch.nn.Linear(self.features_combined//4, 100),
+            torch.nn.ReLU(),
+            torch.nn.Linear(100, 6)
+        )
 
     def forward(self, image, tabular):
         image_features =\
             [image_model(image) for image_model in self.image_models]
-        tabular_features = self.tabular_model(tabular)
         features = torch.cat(image_features, 1)
-        features = torch.cat((features, tabular_features), 1)
-        return self.fc(features)
+        features = torch.cat((features, tabular), 1)
+        return self.head(features)
