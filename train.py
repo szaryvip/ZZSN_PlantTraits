@@ -50,6 +50,7 @@ def train_model(model, train_data_loader, val_data_loader, model_path_prefix,
     model_last_path = f"./models/{model_path_prefix}_last.pt"
     last_value_metrics_validation = float("-inf")
     batch_iteration = 0
+    validation_decrease_counter = 0
 
     model.train()
     for epoch in range(20):
@@ -87,8 +88,12 @@ def train_model(model, train_data_loader, val_data_loader, model_path_prefix,
                 with open("metrics.txt", "a") as f:
                     f.write(f"Validation R2={new_validation_r2}\n")
                 if new_validation_r2 < last_value_metrics_validation:
-                    exit(0)
-                last_value_metrics_validation = new_validation_r2
+                    validation_decrease_counter += 1
+                    if validation_decrease_counter == 5:
+                        exit(0)
+                else:
+                    last_value_metrics_validation = new_validation_r2
+                    validation_decrease_counter = 0
                 model.train()
 
         if (new_max_value_metrics_batch > max_value_metrics_epoch):
