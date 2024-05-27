@@ -68,7 +68,7 @@ def prepare_data():
     return train_data_loader, val_data_loader, original_means, original_stds, tabular_input_size
 
 
-def prepare_model(model_type: Literal["midfusion"] | Literal["ensemble"] | Literal["latefustion"],
+def prepare_model(model_type: Literal["midfusion", "ensemble", "latefustion"],
                   tabular_input_size: int):
     if model_type == "midfusion":
         effnet = timm.create_model(

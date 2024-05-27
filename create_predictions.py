@@ -84,7 +84,7 @@ def prepare_data():
     return test_data_loader, original_means, original_stds, tabular_input_size, test_tabular_data
 
 
-def load_model(model_type: Literal["midfusion"] | Literal["ensemble"] | Literal["latefustion"],
+def load_model(model_type: Literal["midfusion", "ensemble", "latefustion"],
                tabular_input_size):
     model = prepare_model(model_type, tabular_input_size)
     model.load_state_dict(torch.load(f"models/{model_type}_best_epoch.pt"))
