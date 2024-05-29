@@ -2,6 +2,8 @@
 from torchmetrics.regression import R2Score
 import torch
 
+from create_predictions import make_predictions, prepare_data
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -86,7 +88,10 @@ def train_model(model, train_data_loader, val_data_loader, model_path_prefix,
                     f.write(f"Validation R2={new_validation_r2}\n")
                 if new_validation_r2 < last_value_metrics_validation:
                     validation_decrease_counter += 1
-                    if validation_decrease_counter == 5:
+                    if validation_decrease_counter == 15:
+                        test_data_loader, original_means, original_stds, tabular_input_size, test_tabular_data = prepare_data()
+                        make_predictions(model, test_data_loader, test_tabular_data,
+                                         original_means, original_stds)
                         exit(0)
                 else:
                     torch.save(model.state_dict(), model_best_batch_path)
