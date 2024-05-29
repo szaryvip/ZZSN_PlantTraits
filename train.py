@@ -1,4 +1,5 @@
-from torcheval.metrics import R2Score
+# from torcheval.metrics import R2Score
+from torchmetrics.regression import R2Score
 import torch
 
 
@@ -34,8 +35,8 @@ def validate_model(model, metric, val_data_loader,
 
 def train_model(model, train_data_loader, val_data_loader, model_path_prefix,
                 original_means, original_stds, validation_after_n_batches=20):
-    metric = R2Score()
-    criterion = torch.nn.MSELoss()
+    metric = R2Score(num_outputs=6)
+    # criterion = torch.nn.functional.mse_loss
 
     model.to(device)
 
@@ -60,7 +61,7 @@ def train_model(model, train_data_loader, val_data_loader, model_path_prefix,
             targets = targets.to(device)
             optimizer.zero_grad()
             outputs = model(image, features)
-            loss = criterion(outputs, targets)
+            loss = torch.nn.functional.mse_loss(outputs, targets)
             loss.backward()
             optimizer.step()
             outputs = outputs.to("cpu")
