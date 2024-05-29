@@ -3,13 +3,10 @@ from torchmetrics.regression import R2Score
 import torch
 
 from create_predictions import make_predictions, prepare_data
+from utils import denormalize_targets
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
-def denormalize_targets(targets, original_means, original_stds):
-    return targets * original_stds + original_means
 
 
 def validate_model(model, metric, val_data_loader,

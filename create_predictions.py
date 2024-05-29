@@ -7,7 +7,7 @@ import argparse
 from typing import Literal
 from dataset import PGLSDataset
 
-from train import denormalize_targets
+from utils import denormalize_targets
 from prepare_model import prepare_model
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -89,6 +89,7 @@ def load_model(model_type: Literal["midfusion", "ensemble", "latefustion"],
     model = prepare_model(model_type, tabular_input_size)
     model.load_state_dict(torch.load(f"models/{model_type}_best_epoch.pt"))
     return model
+
 
 def make_predictions(model, test_data_loader, test_tabular_data,
                      original_means, original_stds):
