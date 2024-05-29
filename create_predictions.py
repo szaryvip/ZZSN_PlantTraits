@@ -32,7 +32,7 @@ def prepare_data():
         ]
     )
 
-    batch_size = 256
+    batch_size = 128
 
     test_images_path = "data/test_images"
 
