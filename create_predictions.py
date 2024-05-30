@@ -94,7 +94,7 @@ def load_model(model_type: Literal["midfusion", "ensemble", "latefustion"],
 
 
 def make_predictions(model, test_data_loader,
-                     original_means, original_stds):
+                     original_means, original_stds, model_type):
     predictions = []
     model.eval()
     model.to(device)
@@ -114,7 +114,7 @@ def make_predictions(model, test_data_loader,
             ids.extend(id.tolist())
     predictions = [item for sublist in predictions for item in sublist]
 
-    save_predictions(predictions, ids, "predictions.csv")
+    save_predictions(predictions, ids, f"predictions_{model_type}.csv")
 
 
 if __name__ == "__main__":
@@ -125,4 +125,4 @@ if __name__ == "__main__":
     test_data_loader, original_means, original_stds, tabular_input_size, _ = prepare_data()
     model = load_model(args.model_type, tabular_input_size)
     make_predictions(model, test_data_loader,
-                     original_means, original_stds)
+                     original_means, original_stds, args.model_type)
