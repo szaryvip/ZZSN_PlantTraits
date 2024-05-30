@@ -17,7 +17,7 @@ def validate_model(model, metric, val_data_loader,
     accumulated_r2 = 0
     with torch.no_grad():
         for val_data in val_data_loader:
-            image, features, targets = val_data
+            _, image, features, targets = val_data
             image = image.to(device)
             features = features.to(device)
             targets = targets.to(device)
