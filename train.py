@@ -1,11 +1,12 @@
-from torcheval.metrics import R2Score
+# from torcheval.metrics import R2Score
+from torchmetrics.regression import R2Score
 import torch
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 NUM_EPOCHS = 20
 MAX_VALIDATION_DECREASE_COUNTER = 3
-
+SAVE_AFTER_EPOCHS = 5
 
 def denormalize_targets(targets, original_means, original_stds):
     return targets * original_stds + original_means
@@ -36,8 +37,9 @@ def validate_model(model, metric, val_data_loader,
 
 def train_model(model, train_data_loader, val_data_loader, model_path_prefix,
                 original_means, original_stds, validation_after_n_batches=20):
-    metric = R2Score()
-    criterion = torch.nn.MSELoss()
+    metric = R2Score(num_outputs=6)
+    # criterion = torch.nn.MSELoss()
+    criterion = torch.nn.functional.mse_loss
 
     model.to(device)
 
@@ -48,9 +50,11 @@ def train_model(model, train_data_loader, val_data_loader, model_path_prefix,
     metrics_file = f"./models/metrics_{model_path_prefix}.txt"
     last_value_metrics_validation = float("-inf")
     validation_decrease_counter = 0
+    epoch_counter = 0
 
     model.train()
     for epoch in range(NUM_EPOCHS):
+        epoch_counter += 1
         for data in train_data_loader:
             _, image, features, targets = data
             image = image.to(device)
@@ -89,6 +93,8 @@ def train_model(model, train_data_loader, val_data_loader, model_path_prefix,
             torch.save(model.state_dict(), model_best_epoch_path)
             last_value_metrics_validation = new_validation_r2
             validation_decrease_counter = 0
+        if epoch_counter % SAVE_AFTER_EPOCHS == 0:
+            torch.save(model.state_dict(), f"./models/{model_path_prefix}_{epoch_counter}_epochs.pt")
         model.train()
 
     torch.save(model.state_dict(), model_last_path)
