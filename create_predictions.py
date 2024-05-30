@@ -13,10 +13,12 @@ from prepare_model import prepare_model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def save_predictions(predictions, test_csv_dataframe, filename):
+def save_predictions(predictions, ids, filename):
     with open(filename, "w") as f:
         f.write("id,X4,X11,X18,X26,X50,X3112\n")
-        for pred, id in zip(predictions, test_csv_dataframe["id"]):
+        for i in range(len(predictions)):
+            pred = predictions[i]
+            id = ids[i]
             pred = [p.item() for p in pred]
             f.write(f"{id},{','.join([str(p) for p in pred])}\n")
 
@@ -90,14 +92,16 @@ def load_model(model_type: Literal["midfusion", "ensemble", "latefustion"],
     model.load_state_dict(torch.load(f"models/{model_type}_best_epoch.pt"))
     return model
 
-def make_predictions(model, test_data_loader, test_tabular_data,
+
+def make_predictions(model, test_data_loader,
                      original_means, original_stds):
     predictions = []
     model.eval()
     model.to(device)
+    ids = []
     with torch.no_grad():
         for data in test_data_loader:
-            image, features, targets = data
+            id, image, features, targets = data
             image = image.to(device)
             features = features.to(device)
             targets = targets.to(device)
@@ -107,9 +111,10 @@ def make_predictions(model, test_data_loader, test_tabular_data,
             outputs_denorm = denormalize_targets(outputs, original_means,
                                                  original_stds)
             predictions.append(outputs_denorm)
+            ids.extend(id.tolist())
     predictions = [item for sublist in predictions for item in sublist]
 
-    save_predictions(predictions, test_tabular_data, "predictions.csv")
+    save_predictions(predictions, ids, "predictions.csv")
 
 
 if __name__ == "__main__":
@@ -117,7 +122,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_type", type=str, default="midfusion", help="Type of model to train: midfusion, ensemble, latefusion")
     args = parser.parse_args()
 
-    test_data_loader, original_means, original_stds, tabular_input_size, test_tabular_data = prepare_data()
+    test_data_loader, original_means, original_stds, tabular_input_size, _ = prepare_data()
     model = load_model(args.model_type, tabular_input_size)
-    make_predictions(model, test_data_loader, test_tabular_data,
+    make_predictions(model, test_data_loader,
                      original_means, original_stds)

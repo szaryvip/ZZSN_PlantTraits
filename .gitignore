@@ -1,6 +1,6 @@
 data/
 __pycache__/
-predictions
+predictions.csv
 predictions*.csv
 models/*best_*
 models/*metrics*

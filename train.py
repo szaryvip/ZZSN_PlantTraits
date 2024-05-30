@@ -3,6 +3,8 @@ import torch
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+NUM_EPOCHS = 20
+MAX_VALIDATION_DECREASE_COUNTER = 3
 
 
 def denormalize_targets(targets, original_means, original_stds):
@@ -41,20 +43,16 @@ def train_model(model, train_data_loader, val_data_loader, model_path_prefix,
 
     optimizer = torch.optim.Adam(model.parameters(), maximize=False, lr=1e-4,
                                  weight_decay=1e-5)
-    model_best_batch_path = f"./models/{model_path_prefix}_best_batch.pt"
-    max_value_metrics_epoch = float("-inf")
     model_best_epoch_path = f"./models/{model_path_prefix}_best_epoch.pt"
     model_last_path = f"./models/{model_path_prefix}_last.pt"
     metrics_file = f"./models/metrics_{model_path_prefix}.txt"
     last_value_metrics_validation = float("-inf")
-    batch_iteration = 0
     validation_decrease_counter = 0
 
     model.train()
-    for epoch in range(20):
+    for epoch in range(NUM_EPOCHS):
         for data in train_data_loader:
-            batch_iteration += 1
-            image, features, targets = data
+            _, image, features, targets = data
             image = image.to(device)
             features = features.to(device)
             targets = targets.to(device)
@@ -74,27 +72,23 @@ def train_model(model, train_data_loader, val_data_loader, model_path_prefix,
             with open(metrics_file, "a") as f:
                 f.write(f"Epoch {epoch}: R2={new_max_value_metrics_batch}\n")
 
-            if batch_iteration % validation_after_n_batches == 0:
-                model.eval()
-                new_validation_r2 = validate_model(model, metric,
-                                                   val_data_loader,
-                                                   original_means,
-                                                   original_stds)
-                metric.reset()
-                with open(metrics_file, "a") as f:
-                    f.write(f"Validation R2={new_validation_r2}\n")
-                if new_validation_r2 < last_value_metrics_validation:
-                    validation_decrease_counter += 1
-                    if validation_decrease_counter == 5:
-                        exit(0)
-                else:
-                    torch.save(model.state_dict(), model_best_batch_path)
-                    last_value_metrics_validation = new_validation_r2
-                    validation_decrease_counter = 0
-                model.train()
-
-        if (new_max_value_metrics_batch > max_value_metrics_epoch):
-            max_value_metrics_epoch = new_max_value_metrics_batch
+        model.eval()
+        new_validation_r2 = validate_model(model, metric,
+                                            val_data_loader,
+                                            original_means,
+                                            original_stds)
+        metric.reset()
+        with open(metrics_file, "a") as f:
+            f.write(f"Validation R2={new_validation_r2}\n")
+        if new_validation_r2 < last_value_metrics_validation:
+            validation_decrease_counter += 1
+            if validation_decrease_counter == MAX_VALIDATION_DECREASE_COUNTER:
+                torch.save(model.state_dict(), model_last_path)
+                exit(0)
+        else:
             torch.save(model.state_dict(), model_best_epoch_path)
+            last_value_metrics_validation = new_validation_r2
+            validation_decrease_counter = 0
+        model.train()
 
     torch.save(model.state_dict(), model_last_path)
