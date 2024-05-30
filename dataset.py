@@ -51,4 +51,4 @@ class PGLSDataset(Dataset):
         if self.transform_csv:
             features = self.transform_csv(features)
 
-        return image, features, targets
+        return id, image, features, targets

@@ -13,10 +13,12 @@ from prepare_model import prepare_model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def save_predictions(predictions, test_csv_dataframe, filename):
+def save_predictions(predictions, ids, filename):
     with open(filename, "w") as f:
         f.write("id,X4,X11,X18,X26,X50,X3112\n")
-        for pred, id in zip(predictions, test_csv_dataframe["id"]):
+        for i in range(len(predictions)):
+            pred = predictions[i]
+            id = ids[i]
             pred = [p.item() for p in pred]
             f.write(f"{id},{','.join([str(p) for p in pred])}\n")
 
@@ -45,7 +47,7 @@ def prepare_data():
     # Filter data
     upper_values = {}
     for target in targets:
-        upper_values[target] = tabular_data[target + "_mean"].quantile(0.99)
+        upper_values[target] = tabular_data[target + "_mean"].quantile(0.98)
         tabular_data = tabular_data[tabular_data[target + "_mean"] < upper_values[target]]
         tabular_data = tabular_data[tabular_data[target + "_mean"] > 0]
 
@@ -96,9 +98,10 @@ def make_predictions(model, test_data_loader, test_tabular_data,
     predictions = []
     model.eval()
     model.to(device)
+    ids = []
     with torch.no_grad():
         for data in test_data_loader:
-            image, features, targets = data
+            id, image, features, targets = data
             image = image.to(device)
             features = features.to(device)
             targets = targets.to(device)
@@ -108,9 +111,10 @@ def make_predictions(model, test_data_loader, test_tabular_data,
             outputs_denorm = denormalize_targets(outputs, original_means,
                                                  original_stds)
             predictions.append(outputs_denorm)
+            ids.extend(id.tolist())
     predictions = [item for sublist in predictions for item in sublist]
 
-    save_predictions(predictions, test_tabular_data, "predictions.csv")
+    save_predictions(predictions, ids, "predictions.csv")
 
 
 if __name__ == "__main__":
