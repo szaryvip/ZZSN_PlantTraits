@@ -10,7 +10,6 @@ from torchrec.models.deepfm import DenseArch
 import argparse
 import timm
 from typing import Literal
-import albumentations as A
 
 from train import train_model
 
@@ -18,6 +17,18 @@ from train import train_model
 BATCH_SIZE = 128
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+class AddGaussianNoise(object):
+    def __init__(self, mean=0.0, std=1.0):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, tensor):
+        return tensor + torch.randn(tensor.size()) * self.std + self.mean
+
+    def __repr__(self):
+        return self.__class__.__name__ + f'(mean={self.mean}, std={self.std})'
 
 
 def prepare_data():
@@ -62,12 +73,9 @@ def prepare_data():
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         transforms.RandomHorizontalFlip(p=0.5),
-        A.HorizontalFlip(p=0.5),
-        A.VerticalFlip(p=0.5),
-        A.RandomRotate90(p=0.5),
-        A.RandomBrightnessContrast(p=0.2),
-        A.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=0.2),
-        A.GaussNoise(p=0.2),
+        transforms.RandomVerticalFlip(p=0.5),
+        transforms.ColorJitter(brightness=0.2, contrast=0.2, hue=0.2, saturation=0.3),
+        AddGaussianNoise(0., 0.1)
     ])
 
     train_image_csv_dataset = PGLSDataset(tabular_data=tabular_data, image_folder=train_images_dataset, transform_csv=None, transform_train=transform_train, transform_val=transform_val)
