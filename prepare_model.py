@@ -35,7 +35,7 @@ def prepare_data():
     # Filter data
     upper_values = {}
     for target in targets:
-        upper_values[target] = tabular_data[target+"_mean"].quantile(0.98)
+        upper_values[target] = tabular_data[target+"_mean"].quantile(0.95)
         tabular_data = tabular_data[tabular_data[target+"_mean"] < upper_values[target]]
         tabular_data = tabular_data[tabular_data[target+"_mean"] > 0]
 
