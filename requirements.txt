@@ -8,3 +8,4 @@ timm==0.9.16
 torchrec==0.7.0
 iopath==0.1.10
 pyre_extensions==0.0.30
+albumentations==1.0.3

@@ -10,6 +10,7 @@ from torchrec.models.deepfm import DenseArch
 import argparse
 import timm
 from typing import Literal
+import albumentations as A
 
 from train import train_model
 
@@ -20,12 +21,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def prepare_data():
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-
     train_images_path = 'data/train_images'
     train_csv_path = 'data/train.csv'
 
@@ -54,10 +49,32 @@ def prepare_data():
         max_val = tabular_data[column].max()
         tabular_data[column] = (tabular_data[column] - min_val) / (max_val - min_val)
 
-    train_images_dataset = ImageFolder(root=train_images_path, transform=transform)
+    train_images_dataset = ImageFolder(root=train_images_path)
 
-    train_image_csv_dataset = PGLSDataset(tabular_data=tabular_data, image_folder=train_images_dataset, transform_csv=None)
+    transform_val = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
+    transform_train = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.RandomHorizontalFlip(p=0.5),
+        A.HorizontalFlip(p=0.5),
+        A.VerticalFlip(p=0.5),
+        A.RandomRotate90(p=0.5),
+        A.RandomBrightnessContrast(p=0.2),
+        A.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=0.2),
+        A.GaussNoise(p=0.2),
+    ])
+
+    train_image_csv_dataset = PGLSDataset(tabular_data=tabular_data, image_folder=train_images_dataset, transform_csv=None, transform_train=transform_train, transform_val=transform_val)
     train, val = random_split(train_image_csv_dataset, [int(0.9*len(train_image_csv_dataset)), len(train_image_csv_dataset) - int(0.9*len(train_image_csv_dataset))])
+
+    train.dataset.is_train = True
+    val.dataset.is_train = False
 
     train_data_loader = DataLoader(train, batch_size=BATCH_SIZE, shuffle=True)
     val_data_loader = DataLoader(val, batch_size=BATCH_SIZE, shuffle=True)
