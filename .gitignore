@@ -5,3 +5,5 @@ predictions*.csv
 models/*best_*
 models/*metrics*
 log_*
+*_last*.pt
+models/*.pt
