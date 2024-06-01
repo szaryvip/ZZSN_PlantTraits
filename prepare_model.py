@@ -14,7 +14,7 @@ from typing import Literal
 from train import train_model
 
 
-BATCH_SIZE = 4
+BATCH_SIZE = 128
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
