@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 
 
 class PGLSDataset(Dataset):
-    def __init__(self, tabular_data, image_folder, transform_csv=None):
+    def __init__(self, tabular_data, image_folder, transform_csv=None, transform_train=None, transform_val=None):
         """
         Args:
             csv_file (string): Path to the CSV file containing data.
@@ -14,6 +14,8 @@ class PGLSDataset(Dataset):
         self.image_folder = image_folder
         self.transform_csv = transform_csv
         self.targets = ["X4", "X11", "X18", "X26", "X50", "X3112"]
+        self.transform_train = transform_train
+        self.transform_val = transform_val
 
     def __len__(self):
         return len(self.data_frame)
@@ -29,6 +31,11 @@ class PGLSDataset(Dataset):
 
         if self.image_folder.transform is not None:
             image = self.image_folder.transform(image)
+
+        if self.transform_train is not None and self.is_train:
+            image = self.transform_train(image)
+        elif self.transform_val is not None and not self.is_train:
+            image = self.transform_val(image)
 
         try:
             targets =\
