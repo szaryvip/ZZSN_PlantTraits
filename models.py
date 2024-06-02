@@ -27,9 +27,10 @@ class PGLSModel(torch.nn.Module):
         dummy_input = torch.randn(1, 3, 224, 224)
         with torch.no_grad():
             output = image_model(dummy_input)
+        image_model.train()
         image_features_number = output.shape[1]
         self.image_model = image_model
-        self.features_combined = 2 * image_features_number
+        self.features_combined = image_features_number
 
         self.table_model = torch.nn.Sequential(
             torch.nn.Linear(tabular_input_len, 512),
