@@ -29,7 +29,7 @@ class PGLSModel(torch.nn.Module):
             output = image_model(dummy_input)
         image_features_number = output.shape[1]
         self.image_model = image_model
-        self.features_combined = image_features_number + tabular_input_len
+        self.features_combined = 2 * image_features_number
 
         self.table_model = torch.nn.Sequential(
             torch.nn.Linear(tabular_input_len, 512),
@@ -40,7 +40,7 @@ class PGLSModel(torch.nn.Module):
             torch.nn.BatchNorm1d(256),
             torch.nn.Dropout(0.25),
             torch.nn.ReLU(),
-            torch.nn.Linear(256, tabular_input_len)
+            torch.nn.Linear(256, image_features_number)
         )
 
         self.combined = torch.nn.Sequential(
@@ -57,8 +57,8 @@ class PGLSModel(torch.nn.Module):
 
     def forward(self, image, tabular):
         image_features = self.image_model(image)
-        features = self.table_model(tabular)
-        combined_features = torch.cat((image_features, features), 1)
+        table_features = self.table_model(tabular)
+        combined_features = (image_features + table_features) / 2
         return self.combined(combined_features)
 
 
