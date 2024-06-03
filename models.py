@@ -27,21 +27,40 @@ class PGLSModel(torch.nn.Module):
         dummy_input = torch.randn(1, 3, 224, 224)
         with torch.no_grad():
             output = image_model(dummy_input)
+        image_model.train()
         image_features_number = output.shape[1]
         self.image_model = image_model
-        self.features_combined = image_features_number + tabular_input_len
-        self.head = torch.nn.Sequential(
+        self.features_combined = image_features_number
+
+        self.table_model = torch.nn.Sequential(
+            torch.nn.Linear(tabular_input_len, 512),
+            torch.nn.BatchNorm1d(512),
+            torch.nn.Dropout(0.25),
+            torch.nn.ReLU(),
+            torch.nn.Linear(512, 256),
+            torch.nn.BatchNorm1d(256),
+            torch.nn.Dropout(0.25),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, image_features_number)
+        )
+
+        self.combined = torch.nn.Sequential(
             torch.nn.Linear(self.features_combined, self.features_combined//4),
+            torch.nn.BatchNorm1d(self.features_combined//4),
+            torch.nn.Dropout(0.5),
             torch.nn.ReLU(),
             torch.nn.Linear(self.features_combined//4, 100),
+            torch.nn.BatchNorm1d(100),
+            torch.nn.Dropout(0.5),
             torch.nn.ReLU(),
             torch.nn.Linear(100, 6)
         )
 
     def forward(self, image, tabular):
         image_features = self.image_model(image)
-        features = torch.cat((image_features, tabular), 1)
-        return self.head(features)
+        table_features = self.table_model(tabular)
+        combined_features = (image_features + table_features) / 2
+        return self.combined(combined_features)
 
 
 class SimpleTabularModel(torch.nn.Module):
@@ -70,8 +89,12 @@ class EnsemblePGLSModel(torch.nn.Module):
         self.features_combined = image_features_number + tabular_input_len
         self.head = torch.nn.Sequential(
             torch.nn.Linear(self.features_combined, self.features_combined//4),
+            torch.nn.BatchNorm1d(self.features_combined//4),
+            torch.nn.Dropout(0.5),
             torch.nn.ReLU(),
             torch.nn.Linear(self.features_combined//4, 100),
+            torch.nn.BatchNorm1d(100),
+            torch.nn.Dropout(0.5),
             torch.nn.ReLU(),
             torch.nn.Linear(100, 6)
         )

@@ -19,13 +19,19 @@ BATCH_SIZE = 128
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-def prepare_data():
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
+class AddGaussianNoise(object):
+    def __init__(self, mean=0.0, std=1.0):
+        self.mean = mean
+        self.std = std
 
+    def __call__(self, tensor):
+        return tensor + torch.randn(tensor.size()) * self.std + self.mean
+
+    def __repr__(self):
+        return self.__class__.__name__ + f'(mean={self.mean}, std={self.std})'
+
+
+def prepare_data():
     train_images_path = 'data/train_images'
     train_csv_path = 'data/train.csv'
 
@@ -35,7 +41,7 @@ def prepare_data():
     # Filter data
     upper_values = {}
     for target in targets:
-        upper_values[target] = tabular_data[target+"_mean"].quantile(0.98)
+        upper_values[target] = tabular_data[target+"_mean"].quantile(0.95)
         tabular_data = tabular_data[tabular_data[target+"_mean"] < upper_values[target]]
         tabular_data = tabular_data[tabular_data[target+"_mean"] > 0]
 
@@ -54,10 +60,29 @@ def prepare_data():
         max_val = tabular_data[column].max()
         tabular_data[column] = (tabular_data[column] - min_val) / (max_val - min_val)
 
-    train_images_dataset = ImageFolder(root=train_images_path, transform=transform)
+    train_images_dataset = ImageFolder(root=train_images_path)
 
-    train_image_csv_dataset = PGLSDataset(tabular_data=tabular_data, image_folder=train_images_dataset, transform_csv=None)
-    train, val = random_split(train_image_csv_dataset, [int(0.9*len(train_image_csv_dataset)), len(train_image_csv_dataset) - int(0.9*len(train_image_csv_dataset))])
+    transform_val = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
+    transform_train = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomVerticalFlip(p=0.5),
+        transforms.ColorJitter(brightness=0.2, contrast=0.2, hue=0.2, saturation=0.3),
+        AddGaussianNoise(0., 0.1)
+    ])
+
+    train_image_csv_dataset = PGLSDataset(tabular_data=tabular_data, image_folder=train_images_dataset, transform_csv=None,transform_train=transform_train, transform_val=transform_val)
+    train, val = random_split(train_image_csv_dataset, [int(0.8*len(train_image_csv_dataset)), len(train_image_csv_dataset) - int(0.8*len(train_image_csv_dataset))])
+
+    train.dataset.is_train = True
+    val.dataset.is_train = False
 
     train_data_loader = DataLoader(train, batch_size=BATCH_SIZE, shuffle=True)
     val_data_loader = DataLoader(val, batch_size=BATCH_SIZE, shuffle=True)
