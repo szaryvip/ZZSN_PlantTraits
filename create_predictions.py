@@ -89,7 +89,7 @@ def prepare_data():
 def load_model(model_type: Literal["midfusion", "ensemble", "latefustion"],
                tabular_input_size):
     model = prepare_model(model_type, tabular_input_size)
-    model.load_state_dict(torch.load(f"models/{model_type}_best_batch.pt"))
+    model.load_state_dict(torch.load(f"models/{model_type}_best_epoch.pt"))
     return model
 
 

@@ -79,7 +79,7 @@ def prepare_data():
     ])
 
     train_image_csv_dataset = PGLSDataset(tabular_data=tabular_data, image_folder=train_images_dataset, transform_csv=None,transform_train=transform_train, transform_val=transform_val)
-    train, val = random_split(train_image_csv_dataset, [int(0.9*len(train_image_csv_dataset)), len(train_image_csv_dataset) - int(0.9*len(train_image_csv_dataset))])
+    train, val = random_split(train_image_csv_dataset, [int(0.8*len(train_image_csv_dataset)), len(train_image_csv_dataset) - int(0.8*len(train_image_csv_dataset))])
 
     train.dataset.is_train = True
     val.dataset.is_train = False

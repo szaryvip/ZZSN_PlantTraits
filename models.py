@@ -89,8 +89,12 @@ class EnsemblePGLSModel(torch.nn.Module):
         self.features_combined = image_features_number + tabular_input_len
         self.head = torch.nn.Sequential(
             torch.nn.Linear(self.features_combined, self.features_combined//4),
+            torch.nn.BatchNorm1d(self.features_combined//4),
+            torch.nn.Dropout(0.5),
             torch.nn.ReLU(),
             torch.nn.Linear(self.features_combined//4, 100),
+            torch.nn.BatchNorm1d(100),
+            torch.nn.Dropout(0.5),
             torch.nn.ReLU(),
             torch.nn.Linear(100, 6)
         )
