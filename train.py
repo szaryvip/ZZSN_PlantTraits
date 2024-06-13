@@ -1,13 +1,10 @@
-# from torcheval.metrics import R2Score
-from torchmetrics.regression import R2Score
 import torch
+
+from constants import NUM_EPOCHS, MAX_VALIDATION_DECREASE_COUNTER, VALIDATE_AFTER_N_BATCHES, SAVE_AFTER_EPOCHS
+from torchmetrics.regression import R2Score
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-NUM_EPOCHS = 20
-MAX_VALIDATION_DECREASE_COUNTER = 2
-VALIDATE_AFTER_N_BATCHES = 10
-SAVE_AFTER_EPOCHS = 5
 
 
 def denormalize_targets(targets, original_means, original_stds):

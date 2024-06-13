@@ -119,7 +119,8 @@ def make_predictions(model, test_data_loader,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_type", type=str, default="midfusion", help="Type of model to train: midfusion, ensemble, latefusion")
+    parser.add_argument("--model_type", type=str, default="midfusion",
+                        help="Type of model to train: midfusion, ensemble, latefusion")
     args = parser.parse_args()
 
     test_data_loader, original_means, original_stds, tabular_input_size, _ = prepare_data()

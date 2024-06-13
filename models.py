@@ -11,7 +11,8 @@ class PGLSModelLateFusion(torch.nn.Module):
         image_features_number = output.shape[1]
         self.image_model = image_model
         self.tabular_model = tabular_model
-        self.fc = torch.nn.Linear(image_features_number + tabular_model_out_size, 6)
+        self.fc = torch.nn.Linear(image_features_number +
+                                  tabular_model_out_size, 6)
 
     def forward(self, image, tabular):
         image_features = self.image_model(image)

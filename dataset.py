@@ -3,7 +3,8 @@ from torch.utils.data import Dataset
 
 
 class PGLSDataset(Dataset):
-    def __init__(self, tabular_data, image_folder, transform_csv=None, transform_train=None, transform_val=None):
+    def __init__(self, tabular_data, image_folder, transform_csv=None,
+                 transform_train=None, transform_val=None):
         """
         Args:
             csv_file (string): Path to the CSV file containing data.

@@ -1,12 +1,6 @@
 import matplotlib.pyplot as plt
 
-
-PATH_TO_METRICS = {"midfustion": "models/metrics_midfusion.txt",
-                   "latefustion": "models/metrics_latefusion.txt",
-                   "ensemble": "models/metrics_ensemble.txt"}
-COLORS = {"midfustion": "red",
-          "latefustion": "blue",
-          "ensemble": "green"}
+from constants import PATH_TO_METRICS, COLORS
 
 
 val_for_model = {}
@@ -47,18 +41,19 @@ for model_type in PATH_TO_METRICS.keys():
     plt.ylabel("R2 Score")
     plt.xticks(x)
     plt.legend()
-    plt.savefig(f"{model_type}_plot.png")
+    plt.savefig(f"plots/{model_type}_plot.png")
 
     val_for_model[model_type] = val_r2
-    
+
 plt.figure()
 for model_type in val_for_model.keys():
     x = list(range(len(val_for_model[model_type])))
-    plt.plot(x, val_for_model[model_type], color=COLORS[model_type], label=model_type)
+    plt.plot(x, val_for_model[model_type], color=COLORS[model_type],
+             label=model_type)
 
 plt.title("Validation R2 for each model")
 plt.xlabel("Epochs")
 plt.xticks(list(range(20)))
 plt.ylabel("R2 Score")
 plt.legend()
-plt.savefig("combined_plot.png")
+plt.savefig("plots/combined_plot.png")
