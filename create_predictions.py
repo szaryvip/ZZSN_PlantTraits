@@ -23,7 +23,7 @@ def save_predictions(predictions, ids, filename):
             f.write(f"{id},{','.join([str(p) for p in pred])}\n")
 
 
-def prepare_data():
+def prepare_test_data():
     transform = transforms.Compose(
         [
             transforms.Resize((224, 224)),
@@ -123,7 +123,7 @@ if __name__ == "__main__":
                         help="Type of model to train: midfusion, ensemble, latefusion")
     args = parser.parse_args()
 
-    test_data_loader, original_means, original_stds, tabular_input_size, _ = prepare_data()
+    test_data_loader, original_means, original_stds, tabular_input_size, _ = prepare_test_data()
     model = load_model(args.model_type, tabular_input_size)
     make_predictions(model, test_data_loader,
                      original_means, original_stds, args.model_type)
